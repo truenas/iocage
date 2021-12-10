@@ -1462,13 +1462,14 @@ class IOCStart(object):
             open(rc_conf_path, 'w').close()
             entries = {}
         else:
-            with open(rc_conf_path, 'r') as f:
+            with open(rc_conf_path, 'rb') as f:
                 entries = {
                     k: v.replace("'", '').replace('"', '')
                     for k, v in map(
                         lambda l: [e.strip() for e in l.strip().split('=', 1)],
                         filter(
-                            lambda l: not l.strip().startswith('#') and '=' in l, f.readlines()
+                            lambda l: not l.strip().startswith('#') and '=' in l,
+                            map(lambda s: s.decode(errors='ignore'), f.readlines())
                         )
                     )
                 }
