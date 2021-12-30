@@ -46,6 +46,7 @@ import iocage_lib.ioc_common
 import iocage_lib.ioc_create
 import iocage_lib.ioc_destroy
 import iocage_lib.ioc_exec
+import iocage_lib.ioc_fstab
 import iocage_lib.ioc_list
 import iocage_lib.ioc_json
 import iocage_lib.ioc_start
@@ -94,6 +95,7 @@ class IOCPlugin(object):
             self.plugin_json_path = None
         self.plugin = plugin
         self.jail = jail
+        self.mountpoints = kwargs.pop("mountpoints", [])
         self.http = kwargs.pop("http", True)
         self.hardened = kwargs.pop("hardened", False)
         self.date = datetime.datetime.utcnow().strftime("%F")
@@ -321,6 +323,7 @@ class IOCPlugin(object):
 
         try:
             jaildir, _conf, repo_dir = self.__fetch_plugin_create__(props)
+            self.__fetch_plugin_add_mountpoints__(jaildir)
             # As soon as we create the jail, we should write the plugin manifest to jail directory
             # This is done to ensure that subsequent starts of the jail make use of the plugin
             # manifest as required
@@ -606,6 +609,52 @@ class IOCPlugin(object):
                 _callback=self.callback)
 
         return jaildir, _conf, repo_dir
+
+    def __fetch_plugin_add_mountpoints__(self, jaildir):
+        for mountpoint in self.mountpoints:
+            fstype = "nullfs"
+            options = "rw"
+            dump = "0"
+            _pass = "0"
+
+            parts = mountpoint.split(":")
+            if len(parts) < 2 or len(parts) > 3:
+                raise RuntimeError(
+                    f"Ignoring invalid mountpoint `{mountpoint}`, expecting "
+                    "`source:destination[:options]`."
+                )
+            else:
+                source = parts[0].strip()
+                destination = parts[1].strip()
+                if len(parts) == 3:
+                    options = parts[2]
+
+            if (not source or source[0] != "/"
+                or not destination or destination[0] != "/"
+                or not options):
+                raise RuntimeError(
+                    f"Ignoring invalid mountpoint `{mountpoint}`, source and "
+                    "destination must be absolute path, options cannot be "
+                    "empty."
+                )
+
+            destination = f"{jaildir}/root{destination}"
+            if destination and len(destination) > 88:
+                iocage_lib.ioc_common.logit(
+                    {
+                        "level":
+                        "WARNING",
+                        "message":
+                        "The destination's mountpoint exceeds 88 "
+                        "characters, this may cause failure!"
+                    },
+                    silent=self.silent)
+
+            os.makedirs(destination, exist_ok=True)
+            iocage_lib.ioc_fstab.IOCFstab(
+                self.jail, "add", source, destination,
+                fstype, options, dump, _pass
+            )
 
     def __fetch_plugin_install_packages__(self, jaildir, conf, pkg_repos,
                                           create_props, repo_dir):

@@ -150,6 +150,12 @@ def validate_count(ctx, param, value):
     '--proxy', '-S', default=None,
     help='Provide proxy to use for creating jail'
 )
+@click.option(
+    "--mountpoints", "-M", multiple=True,
+    help="Specify a mountpoint to setup in the jail. Format is "
+         "source:destination[:options].\n(only applicable if "
+         "fetching a plugin)"
+)
 def cli(**kwargs):
     """CLI command that calls fetch_release()"""
     release = kwargs.get("release", None)
