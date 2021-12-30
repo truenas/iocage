@@ -1180,6 +1180,12 @@ fingerprint: {fingerprint}
         uri = urllib.parse.urlparse(plugin_conf['artifact'])
         if uri.scheme == 'file':
             artifact_path = urllib.parse.unquote(uri.path)
+            if self.plugin_json_path is not None:
+                # Allow relative path to artifacts if working with local files
+                json_dir = os.path.dirname(self.plugin_json_path)
+                artifact_path = os.path.normpath(
+                    os.path.join(json_dir, artifact_path)
+                )
             if not os.path.exists(artifact_path):
                 iocage_lib.ioc_common.logit(
                     {
