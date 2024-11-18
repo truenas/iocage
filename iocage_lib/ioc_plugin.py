@@ -62,9 +62,6 @@ from iocage_lib.dataset import Dataset
 GIT_LOCK = threading.Lock()
 RE_PLUGIN_VERSION = re.compile(r'"path"\s*:\s*"([/\.\+,\d\w-]*)\.(?:\btxz\b|\bpkg\b)"')
 
-# deliberately crash if tarfile doesn't have required filter
-tarfile.tar_filter
-
 
 class IOCPlugin(object):
 
