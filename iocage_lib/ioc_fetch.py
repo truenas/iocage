@@ -47,9 +47,6 @@ import iocage_lib.ioc_start
 from iocage_lib.pools import Pool
 from iocage_lib.dataset import Dataset
 
-# deliberately crash if tarfile doesn't have required filter
-tarfile.tar_filter
-
 
 class IOCFetch:
 
